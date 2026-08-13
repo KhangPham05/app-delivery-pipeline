@@ -32,5 +32,8 @@ async def read_ready():
         return JSONResponse(status_code=503, content={"status": "not ready"})
     return {"status": "ready"}
 
+# This block only runs via `python -m src.main` (way 1 below). It's skipped
+# when the app is imported by uvicorn/fastapi CLI (ways 2 and 3), since they
+# import `app` directly rather than executing this file as __main__.
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
