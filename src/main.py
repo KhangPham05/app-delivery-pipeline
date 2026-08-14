@@ -4,10 +4,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
+from src.api.urls import router as urls_router
 from src.db import models  # noqa: F401 - registers models on Base.metadata
 from src.db.session import Base, engine
 
 app = FastAPI()
+app.include_router(urls_router)
 
 
 @app.on_event("startup")
