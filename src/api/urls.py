@@ -1,11 +1,12 @@
 import secrets
 import string
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.db.models import Url
+from src.db.models import Click, Url
 from src.db.session import get_db
 from src.schemas.url import UrlCreate, UrlOut
 
@@ -41,3 +42,21 @@ def create_url(payload: UrlCreate, db: Session = Depends(get_db)):
         return url
 
     raise HTTPException(status_code=500, detail="Could not generate a unique short code")
+
+
+# Kept as the last route in this router: a bare {short_code} path is a
+# catch-all for any single path segment, so it must never be registered
+# ahead of more specific routes (see app.include_router order in main.py).
+@router.get("/{short_code}")
+def redirect_to_original(
+    short_code: str = Path(min_length=6, max_length=6),
+    db: Session = Depends(get_db),
+):
+    url = db.query(Url).filter(Url.short_code == short_code).first()
+    if url is None:
+        raise HTTPException(status_code=404, detail="Short URL not found")
+
+    db.add(Click(url_id=url.id))
+    db.commit()
+
+    return RedirectResponse(url=url.original_url, status_code=status.HTTP_302_FOUND)
