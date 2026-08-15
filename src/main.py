@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
+from src.api.urls import router as urls_router
 from src.db import models  # noqa: F401 - registers models on Base.metadata
 from src.db.session import Base, engine
 
@@ -32,5 +33,14 @@ async def read_ready():
         return JSONResponse(status_code=503, content={"status": "not ready"})
     return {"status": "ready"}
 
+# Included last: urls_router's GET /{short_code} is a catch-all for any
+# single path segment, so it must be registered after the literal routes
+# above or it would shadow them (e.g. /healthz would be treated as a short
+# code and 404).
+app.include_router(urls_router)
+
+# This block only runs via `python -m src.main` (way 1 below). It's skipped
+# when the app is imported by uvicorn/fastapi CLI (ways 2 and 3), since they
+# import `app` directly rather than executing this file as __main__.
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
