@@ -3,18 +3,20 @@ import string
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.db.models import Click, Url
 from src.db.session import get_db
-from src.schemas.url import UrlCreate, UrlOut
+from src.schemas.url import UrlCreate, UrlOut, UrlStats
 
 router = APIRouter()
 
 SHORT_CODE_LENGTH = 6
 SHORT_CODE_ALPHABET = string.ascii_letters + string.digits
 MAX_SHORT_CODE_ATTEMPTS = 5
+RECENT_CLICKS_LIMIT = 10
 
 
 def _generate_short_code() -> str:
@@ -42,6 +44,32 @@ def create_url(payload: UrlCreate, db: Session = Depends(get_db)):
         return url
 
     raise HTTPException(status_code=500, detail="Could not generate a unique short code")
+
+
+@router.get("/urls/{short_code}/stats", response_model=UrlStats)
+def get_url_stats(
+    short_code: str = Path(min_length=6, max_length=6),
+    db: Session = Depends(get_db),
+):
+    url = db.query(Url).filter(Url.short_code == short_code).first()
+    if url is None:
+        raise HTTPException(status_code=404, detail="Short URL not found")
+
+    total_clicks = db.query(func.count(Click.id)).filter(Click.url_id == url.id).scalar()
+
+    recent_clicks = (
+        db.query(Click.clicked_at)
+        .filter(Click.url_id == url.id)
+        .order_by(Click.clicked_at.desc())
+        .limit(RECENT_CLICKS_LIMIT)
+        .all()
+    )
+
+    return UrlStats(
+        short_code=url.short_code,
+        total_clicks=total_clicks,
+        recent_clicks=[clicked_at for (clicked_at,) in recent_clicks],
+    )
 
 
 # Kept as the last route in this router: a bare {short_code} path is a

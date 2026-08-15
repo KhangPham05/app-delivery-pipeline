@@ -59,6 +59,7 @@ command (without `--reload`) for production.
 - `GET /urls` - list all shortened URLs
 - `POST /urls` - create a shortened URL from `{"original_url": "..."}`, returns the new `short_code`
 - `GET /{short_code}` - redirect to the original URL and record a click
+- `GET /urls/{short_code}/stats` - total click count and recent click timestamps
 
 ## TODO
 - [ ] Add testing instructions

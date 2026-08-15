@@ -14,3 +14,9 @@ class UrlOut(BaseModel):
     short_code: str
     original_url: str
     created_at: datetime
+
+
+class UrlStats(BaseModel):
+    short_code: str
+    total_clicks: int
+    recent_clicks: list[datetime]
