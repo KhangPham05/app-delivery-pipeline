@@ -11,6 +11,28 @@ pip install -r requirements.txt
 cp .env.example .env  # then set DATABASE_URL
 ```
 
+## Database
+
+This project expects a local PostgreSQL server (installed via Homebrew, e.g. `brew install postgresql@16`).
+
+```bash
+# Start Postgres (runs in the background, survives reboots)
+brew services start postgresql@16
+
+# Check it's running
+brew services list | grep postgresql   # should show "started"
+pg_isready                             # should print "accepting connections"
+
+# Stop it
+brew services stop postgresql@16
+```
+
+Create the database once (name must match `DATABASE_URL` in `.env`):
+
+```bash
+createdb app_delivery_pipeline
+```
+
 ## Run
 
 Three equivalent ways to start the server, all from the project root:
@@ -34,9 +56,10 @@ command (without `--reload`) for production.
 
 - `GET /healthz` - liveness check
 - `GET /readyz` - readiness check (verifies DB connection)
+- `GET /urls` - list all shortened URLs
+- `POST /urls` - create a shortened URL from `{"original_url": "..."}`, returns the new `short_code`
+- `GET /{short_code}` - redirect to the original URL and record a click
 
 ## TODO
-
-- [ ] Document URL shortener endpoints as they're added
 - [ ] Add testing instructions
 - [ ] Add deployment notes
