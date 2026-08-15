@@ -1,6 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, HttpUrl
+
+
+class UrlCreate(BaseModel):
+    original_url: HttpUrl
 
 
 class UrlOut(BaseModel):
