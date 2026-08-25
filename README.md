@@ -61,33 +61,11 @@ command (without `--reload`) for production.
 - `GET /{short_code}` - redirect to the original URL and record a click
 - `GET /urls/{short_code}/stats` - total click count and recent click timestamps
 
-## Known Issues
+## Fixed Issues
 
-### Table creation can race with Postgres startup in Kubernetes
-
-`src/main.py`'s startup hook calls `Base.metadata.create_all(bind=engine)` to
-create the `urls`/`clicks` tables. This only runs **once**, at the exact
-moment the app container boots. If it can't reach the DB at that instant, it
-logs a warning and skips table creation (added specifically so the app
-doesn't crash-loop when Postgres isn't up yet — see `src/main.py`) — but it
-never retries afterward.
-
-This becomes a real problem in the k8s/Helm deployment: `helm install`
-starts the app Deployment and the Postgres StatefulSet at roughly the same
-time, and Postgres can take a few seconds longer to become reachable. If the
-app's one `create_all()` attempt lands in that window, `/readyz` will still
-report "ready" shortly after (it only checks `SELECT 1`, not whether tables
-exist) — but the database is left with **no tables at all**, and every real
-query (e.g. `GET /urls`) fails with `relation "urls" does not exist` until
-the app Pod is manually restarted after Postgres is confirmed up.
-
-**Workaround for now:** `kubectl rollout restart deployment/app` after
-confirming `postgres-0` is `1/1 Ready`.
-
-**Planned fix:** an init container on the app Deployment that waits for
-Postgres and ensures the schema exists *before* the main app container
-starts, instead of relying on a single best-effort attempt during app
-startup.
+- **Table creation race with Postgres startup in Kubernetes** — fixed via an
+  `initContainers` step in the Helm chart that waits for Postgres before the
+  app starts.
 
 ## TODO
 - [ ] Add testing instructions
