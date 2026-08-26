@@ -61,6 +61,18 @@ command (without `--reload`) for production.
 - `GET /{short_code}` - redirect to the original URL and record a click
 - `GET /urls/{short_code}/stats` - total click count and recent click timestamps
 
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+createdb app_delivery_pipeline_test   # first time only
+pytest -v
+```
+
+Tests run against a real Postgres database (`app_delivery_pipeline_test`),
+isolated from your dev data — no mocking. `pytest` uses `TestClient` to call
+the app directly in-process, so no server needs to be running first.
+
 ## Fixed Issues
 
 - **Table creation race with Postgres startup in Kubernetes** — fixed via an
@@ -68,5 +80,4 @@ command (without `--reload`) for production.
   app starts.
 
 ## TODO
-- [ ] Add testing instructions
 - [ ] Add deployment notes
