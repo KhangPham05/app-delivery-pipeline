@@ -109,4 +109,4 @@ jobs:
           helm upgrade app helm/app-delivery-pipeline \
             --install \
             --set app.image.tag=${{ github.sha }} \
-            --wait --timeout 2m
+            --wait --timeout 2m --atomic
