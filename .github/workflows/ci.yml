@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - uses: azure/setup-helm@v4
+      - run: helm lint helm/app-delivery-pipeline
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_delivery_pipeline_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app_delivery_pipeline_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg2://app:app@localhost:5432/app_delivery_pipeline_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -v
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t app:${{ github.sha }} .
+      - run: docker save app:${{ github.sha }} -o /tmp/app-image.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-image
+          path: /tmp/app-image.tar
+
+  scan:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-image
+          path: /tmp
+      - run: docker load -i /tmp/app-image.tar
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: app:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: "0" # report only for now; flip to "1" to fail the build on findings
+
+  push:
+    runs-on: ubuntu-latest
+    needs: [build, scan]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-image
+          path: /tmp
+      - run: docker load -i /tmp/app-image.tar
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push to GHCR
+        run: |
+          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          docker tag app:${{ github.sha }} "$IMAGE:${{ github.sha }}"
+          docker tag app:${{ github.sha }} "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
