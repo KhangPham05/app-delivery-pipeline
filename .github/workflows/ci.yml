@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -97,3 +97,16 @@ jobs:
           docker tag app:${{ github.sha }} "$IMAGE:latest"
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
+
+  deploy:
+    runs-on: self-hosted
+    needs: push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to k8s
+        run: |
+          helm upgrade app helm/app-delivery-pipeline \
+            --install \
+            --set app.image.tag=${{ github.sha }} \
+            --wait --timeout 2m --atomic

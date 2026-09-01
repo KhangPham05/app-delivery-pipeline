@@ -1,6 +1,6 @@
 app:
   image:
-    repository: app-delivery-pipeline
+    repository: ghcr.io/khangpham05/app-delivery-pipeline
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 1
