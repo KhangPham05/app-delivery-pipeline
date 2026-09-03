@@ -3,6 +3,7 @@ import string
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import RedirectResponse
+from prometheus_client import Counter
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -17,6 +18,9 @@ SHORT_CODE_LENGTH = 6
 SHORT_CODE_ALPHABET = string.ascii_letters + string.digits
 MAX_SHORT_CODE_ATTEMPTS = 5
 RECENT_CLICKS_LIMIT = 10
+
+urls_created_total = Counter("urls_created_total", "Total number of shortened URLs created")
+redirects_total = Counter("redirects_total", "Total number of redirects served")
 
 
 def _generate_short_code() -> str:
@@ -41,6 +45,7 @@ def create_url(payload: UrlCreate, db: Session = Depends(get_db)):
             db.rollback()
             continue
         db.refresh(url)
+        urls_created_total.inc()
         return url
 
     raise HTTPException(status_code=500, detail="Could not generate a unique short code")
@@ -86,5 +91,6 @@ def redirect_to_original(
 
     db.add(Click(url_id=url.id))
     db.commit()
+    redirects_total.inc()
 
     return RedirectResponse(url=url.original_url, status_code=status.HTTP_302_FOUND)
