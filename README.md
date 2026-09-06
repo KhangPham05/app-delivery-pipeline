@@ -32,62 +32,12 @@ run on every push and PR; `push`/`deploy` only run on a real push to
 `develop`/`main` (never on `pull_request`), so unreviewed code can never
 publish an image or touch the cluster:
 
-```mermaid
-flowchart LR
-    Dev[Developer] -->|git push| GH[GitHub Actions]
-    GH --> Lint[Lint]
-    GH --> Test[Test - real Postgres]
-    Lint --> Build[Build image]
-    Test --> Build
-    Build --> Scan[Vulnerability scan]
-    Scan --> Push[Push to GHCR]
-    Push -->|push to develop/main only| Deploy[Deploy - self-hosted runner]
-    Deploy -->|helm upgrade --rollback-on-failure| Cluster[(k8s cluster)]
-```
+<img src="docs/screenshots/cicd-pipeline.svg" alt="CI/CD pipeline: lint and test feed into build, scan, push to GHCR, then a push-only gate before deploy on a self-hosted runner" width="100%" />
 
-**Runtime, in-cluster** — reflects the actual mechanics confirmed while
-building this (real Pod IPs, `kubectl port-forward`'s real path, Prometheus
-scraping the app's Pod IP directly rather than through the Service):
+**Runtime, in-cluster**:
 
-```mermaid
-flowchart TB
-    User["Your Mac<br/>(browser / curl)"]
-    APIServer["Kubernetes API server"]
-    Kubelet["kubelet (docker-desktop node)"]
+<img src="docs/screenshots/architecture.svg" alt="Runtime architecture: app and Postgres in the default namespace, Prometheus/Grafana/Alertmanager in the monitoring namespace" width="100%" />
 
-    User -->|"kubectl port-forward<br/>localhost:PORT"| APIServer
-    APIServer -->|proxies to| Kubelet
-    Kubelet -.->|"tunnel directly into<br/>one Pod's network namespace"| AppPod
-
-    subgraph Cluster["Kubernetes cluster"]
-        subgraph DefaultNS["default namespace"]
-            AppSvc["Service: app<br/>ClusterIP, port 80 to 8000"]
-            AppPod["Pod: app<br/>e.g. 10.1.0.51:8000"]
-            PGSvc["Service: postgres<br/>headless (ClusterIP: None)"]
-            PGPod["Pod: postgres-0<br/>StatefulSet + PVC"]
-
-            AppSvc -->|"routes to<br/>(kube-proxy)"| AppPod
-            AppPod -->|DATABASE_URL| PGPod
-            PGSvc -.->|"stable DNS: postgres"| PGPod
-        end
-
-        subgraph MonitoringNS["monitoring namespace"]
-            Operator["Pod: kube-prometheus-stack-operator"]
-            Prom["Pod: prometheus-0<br/>StatefulSet"]
-            Graf["Pod: grafana<br/>Deployment"]
-            AM["Pod: alertmanager-0<br/>StatefulSet"]
-            KSM["Pod: kube-state-metrics"]
-
-            Prom -->|queried for dashboards| Graf
-            Prom -->|"fires alerts to<br/>svc :9093"| AM
-            KSM -.->|"scraped: Pod/Deployment<br/>status metrics"| Prom
-        end
-
-        AppPod -.->|"scraped directly at Pod IP:8000/metrics<br/>every 15s (bypasses AppSvc entirely)"| Prom
-        Operator -.->|"watches ServiceMonitor +<br/>PrometheusRule objects"| APIServer
-        Operator -.->|reconciles scrape/alert config| Prom
-    end
-```
 
 ## Setup
 
