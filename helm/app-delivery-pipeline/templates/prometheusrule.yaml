@@ -1,0 +1,41 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+# Only rendered if the PrometheusRule CRD is installed (kube-prometheus-stack
+# present) - same reasoning as servicemonitor.yaml. Viewable in Alertmanager's
+# own UI only for now - no external notification (Slack/email/etc) wired up,
+# by deliberate choice: this is a single-developer local cluster, not
+# something anyone is on-call for.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app
+  labels:
+    # Same requirement as ServiceMonitor: kube-prometheus-stack's Prometheus
+    # only picks up PrometheusRules carrying this label by default
+    # (ruleSelectorNilUsesHelmValues).
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: app.rules
+      rules:
+        - alert: AppDown
+          # up{job="app"} == 0 alone only catches "target exists but is
+          # failing" - if the Deployment scales to 0 (or crashes hard
+          # enough to lose all Endpoints), the target vanishes from
+          # discovery entirely rather than reporting 0, so absent() is
+          # needed to catch that case too.
+          expr: up{job="app"} == 0 or absent(up{job="app"})
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "app target is down"
+            description: "Prometheus has not been able to scrape the app for more than 2 minutes."
+        - alert: PodRestartingFrequently
+          expr: increase(kube_pod_container_status_restarts_total{namespace="default"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "pod {{ "{{ $labels.pod }}" }} is restarting"
+            description: "Container {{ "{{ $labels.container }}" }} in pod {{ "{{ $labels.pod }}" }} has restarted in the last 15 minutes."
+{{- end }}

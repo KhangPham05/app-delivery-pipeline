@@ -1,0 +1,59 @@
+# Auto-discovered by kube-prometheus-stack's Grafana sidecar (label +
+# labelValue below match its default config: sidecar.dashboards.label,
+# searchNamespace: ALL means it watches every namespace, not just
+# "monitoring") - no manual import in the Grafana UI needed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-grafana-dashboard
+  labels:
+    grafana_dashboard: "1"
+data:
+  app-delivery-pipeline.json: |
+    {
+      "title": "App Delivery Pipeline",
+      "uid": "app-delivery-pipeline",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "URLs Created (total)",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+          "targets": [{ "expr": "urls_created_total", "refId": "A" }]
+        },
+        {
+          "id": 2,
+          "title": "Redirects Served (total)",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+          "targets": [{ "expr": "redirects_total", "refId": "A" }]
+        },
+        {
+          "id": 3,
+          "title": "HTTP Request Rate by Status",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "targets": [{
+            "expr": "sum(rate(http_requests_total[5m])) by (status)",
+            "legendFormat": "{{ "{{status}}" }}",
+            "refId": "A"
+          }]
+        },
+        {
+          "id": 4,
+          "title": "Request Latency (p95)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+          "targets": [{
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_highr_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p95",
+            "refId": "A"
+          }]
+        }
+      ]
+    }
