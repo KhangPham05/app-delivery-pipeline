@@ -2,8 +2,7 @@
 # Only rendered if the ServiceMonitor CRD is actually installed in the target
 # cluster (i.e. kube-prometheus-stack is present) - so deploying this chart
 # never breaks if monitoring isn't installed there. See helm/monitoring/
-# for the kube-prometheus-stack values that install the CRD in the first
-# place, and COMMANDS.md for how to install/reinstall it.
+# for the kube-prometheus-stack values that install the CRD in the first place.
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

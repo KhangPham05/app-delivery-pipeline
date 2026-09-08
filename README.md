@@ -119,16 +119,15 @@ docker build -t app-delivery-pipeline:latest .
 docker compose up --build   # app + Postgres together, healthcheck-gated startup
 ```
 
-Non-root user, `.dockerignore` keeps the build context lean. See `COMMANDS.md`
-for the full local/Docker/Kubernetes/Helm/CI-CD command reference.
+Non-root user, `.dockerignore` keeps the build context lean.
 
 ## Kubernetes & Helm
 
 Deployed via the chart in `helm/app-delivery-pipeline/` — Deployment + Service
 for the app, a StatefulSet + PVC for Postgres (stable identity/storage for a
 database, unlike a plain Deployment), and an init container that waits for
-Postgres before the app starts (closes a real race condition — see
-`ISSUES.md`).
+Postgres before the app starts (prevents the app's one-shot table-creation
+attempt at boot from racing Postgres's own startup).
 
 ```bash
 helm upgrade app helm/app-delivery-pipeline \
@@ -181,5 +180,3 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
   --wait --timeout 3m
 ```
 
-## TODO
-- [ ] Add branch protection requiring CI to pass before merge (optional hardening)
