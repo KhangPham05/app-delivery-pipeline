@@ -1,0 +1,23 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+# Only rendered if the ServiceMonitor CRD is actually installed in the target
+# cluster (i.e. kube-prometheus-stack is present) - so deploying this chart
+# never breaks if monitoring isn't installed there. See helm/monitoring/
+# for the kube-prometheus-stack values that install the CRD in the first place.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: app
+  labels:
+    # kube-prometheus-stack's Prometheus only picks up ServiceMonitors
+    # carrying this label by default (serviceMonitorSelectorNilUsesHelmValues)
+    # - without it, this would be silently ignored.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+{{- end }}

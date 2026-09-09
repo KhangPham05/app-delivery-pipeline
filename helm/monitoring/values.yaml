@@ -1,0 +1,16 @@
+# Override values for the third-party prometheus-community/kube-prometheus-stack
+# chart (not our own chart - this file only configures it).
+#
+# Applied via:
+#   helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#     --namespace monitoring --create-namespace \
+#     --version 88.6.3 \
+#     -f helm/monitoring/values.yaml
+
+nodeExporter:
+  enabled: false
+  # Docker Desktop on macOS can't satisfy node-exporter's required host
+  # root-filesystem mount propagation mode ("path / is mounted on / but it
+  # is not a shared or slave mount"). Host-machine metrics aren't relevant
+  # to this project anyway - we care about app-level and k8s-object-level
+  # metrics, not the Mac's own hardware.

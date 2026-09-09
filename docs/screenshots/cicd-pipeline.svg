@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 420" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowBlack2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#333"/>
+    </marker>
+    <marker id="arrowGreen2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2e8b57"/>
+    </marker>
+    <marker id="arrowRed2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c0392b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1300" height="420" fill="#ffffff"/>
+
+  <!-- Developer -->
+  <g>
+    <circle cx="55" cy="140" r="16" fill="#4a5aab"/>
+    <circle cx="55" cy="185" r="26" fill="#4a5aab"/>
+    <text x="55" y="230" font-size="13" text-anchor="middle" fill="#333">Developer</text>
+  </g>
+  <line x1="88" y1="150" x2="135" y2="150" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBlack2)"/>
+  <text x="112" y="140" font-size="11" text-anchor="middle" fill="#333">git push</text>
+
+  <!-- GitHub Actions boundary -->
+  <rect x="140" y="30" width="1130" height="260" rx="10" fill="none" stroke="#4a5aab" stroke-width="2"/>
+  <text x="165" y="55" font-size="15" font-weight="bold" fill="#2c3e78">GitHub Actions</text>
+
+  <!-- hosted runners box: Lint/Test/Build/Scan/Push -->
+  <rect x="160" y="70" width="600" height="195" rx="8" fill="none" stroke="#b03a9e" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="460" y="277" font-size="12" text-anchor="middle" fill="#b03a9e">GitHub-hosted runners — every push and PR</text>
+
+  <!-- Lint -->
+  <rect x="180" y="95" width="110" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="235" y="130" font-size="13" text-anchor="middle" fill="#222">Lint</text>
+
+  <!-- Test -->
+  <rect x="180" y="175" width="110" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="235" y="200" font-size="13" text-anchor="middle" fill="#222">Test</text>
+  <text x="235" y="216" font-size="10" text-anchor="middle" fill="#666">real Postgres</text>
+
+  <line x1="290" y1="125" x2="325" y2="155" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBlack2)"/>
+  <line x1="290" y1="205" x2="325" y2="165" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBlack2)"/>
+
+  <!-- Build -->
+  <rect x="330" y="130" width="110" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="385" y="155" font-size="13" text-anchor="middle" fill="#222">Build</text>
+  <text x="385" y="171" font-size="10" text-anchor="middle" fill="#666">tag: git SHA</text>
+
+  <line x1="440" y1="160" x2="475" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBlack2)"/>
+
+  <!-- Scan -->
+  <rect x="480" y="130" width="110" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="535" y="155" font-size="13" text-anchor="middle" fill="#222">Scan</text>
+  <text x="535" y="171" font-size="10" text-anchor="middle" fill="#666">Trivy (CVEs)</text>
+
+  <line x1="590" y1="160" x2="625" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBlack2)"/>
+
+  <!-- Push to GHCR (last hosted-runner step) -->
+  <rect x="630" y="130" width="110" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="685" y="155" font-size="13" text-anchor="middle" fill="#222">Push</text>
+  <text x="685" y="171" font-size="10" text-anchor="middle" fill="#666">to GHCR</text>
+
+  <!-- gate: tighter gap (750 to 890), text/arrow centered within it -->
+  <line x1="770" y1="160" x2="860" y2="160" stroke="#c0392b" stroke-width="2" marker-end="url(#arrowRed2)"/>
+  <text x="815" y="120" font-size="12" font-weight="bold" text-anchor="middle" fill="#c0392b">push-only gate</text>
+  <text x="815" y="137" font-size="10" text-anchor="middle" fill="#c0392b">develop/main only,</text>
+  <text x="815" y="150" font-size="10" text-anchor="middle" fill="#c0392b">never a PR</text>
+
+  <!-- Deploy - self hosted -->
+  <rect x="890" y="90" width="160" height="140" rx="8" fill="#fdf6e3" stroke="#b7950b" stroke-width="2" stroke-dasharray="4,3"/>
+  <text x="970" y="112" font-size="11" text-anchor="middle" fill="#7d6608">self-hosted runner</text>
+  <rect x="910" y="130" width="120" height="60" rx="6" fill="#fff" stroke="#e0932e" stroke-width="2"/>
+  <text x="970" y="155" font-size="13" text-anchor="middle" fill="#222">Deploy</text>
+  <text x="970" y="171" font-size="10" text-anchor="middle" fill="#666">helm upgrade</text>
+
+  <!-- rollback arrow: centered in the gap between self-hosted box (ends 1050) and cluster (left edge ~1156) -->
+  <line x1="1060" y1="160" x2="1146" y2="160" stroke="#2e8b57" stroke-width="2" marker-end="url(#arrowGreen2)"/>
+  <text x="1103" y="145" font-size="10" text-anchor="middle" fill="#2e8b57">rollback on failure</text>
+
+  <!-- cluster -->
+  <g transform="translate(1130,105)">
+    <circle cx="60" cy="55" r="34" fill="none" stroke="#326ce5" stroke-width="3"/>
+    <circle cx="60" cy="55" r="10" fill="#326ce5"/>
+    <text x="60" y="105" font-size="12" text-anchor="middle" fill="#222">k8s cluster</text>
+  </g>
+
+  <!-- legend -->
+  <rect x="160" y="330" width="1110" height="50" rx="6" fill="#f8f8f8" stroke="#ddd"/>
+  <text x="180" y="360" font-size="11" fill="#555">Same image all the way through: Build produces one artifact — Scan, Push, and Deploy all operate on that exact image via its git-SHA tag, never a separate rebuild.</text>
+</svg>

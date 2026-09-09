@@ -3,6 +3,7 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
@@ -42,6 +43,14 @@ async def read_ready():
     except OperationalError:
         return JSONResponse(status_code=503, content={"status": "not ready"})
     return {"status": "ready"}
+
+# Auto-instruments request count/latency/status codes for every route, and
+# exposes them at GET /metrics for Prometheus to scrape. Registered here,
+# before include_router, for the same reason as / , /healthz, /readyz above:
+# urls_router's GET /{short_code} is a catch-all that would otherwise shadow
+# /metrics (confirmed by testing: it did, returning 422 since "metrics" is
+# 7 characters and fails the short_code length check).
+Instrumentator().instrument(app).expose(app)
 
 # Included last: urls_router's GET /{short_code} is a catch-all for any
 # single path segment, so it must be registered after the literal routes
